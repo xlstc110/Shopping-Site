@@ -20,5 +20,4 @@ public class Order {
     private List<OrderItems> orderItemsList;
 
 
-
 }
