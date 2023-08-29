@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 
-@Document(value = "product")//MongoDB's annotation to indicate this is a Document model
+@Document(value = "product")//MongoDB's annotation to indicate this is a Document model(NoSQL), otherwise @Entity for SQL
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder//Stream way to create a new Object of this class with fields.

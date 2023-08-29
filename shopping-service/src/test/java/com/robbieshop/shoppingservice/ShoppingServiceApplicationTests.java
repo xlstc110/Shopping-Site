@@ -60,15 +60,9 @@ class ShoppingServiceApplicationTests {
 
 	@Test
 	void shouldGetAllProducts() throws Exception {
-		ProductRequest productRequest = getProductRequest();
-		String productRequestJson = objectMapper.writeValueAsString(productRequest);
-
 		mockMvc.perform(MockMvcRequestBuilders.get("/api/product")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(productRequestJson))
+						.contentType(MediaType.APPLICATION_JSON))
 						.andExpect(status().isOk());
-
-		//Assertions.assertTrue(productRepository.findAll().size() > 0);
 	}
 
 	private ProductRequest getProductRequest() {
