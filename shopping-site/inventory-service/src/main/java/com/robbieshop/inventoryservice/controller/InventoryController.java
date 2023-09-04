@@ -1,7 +1,7 @@
 package com.robbieshop.inventoryservice.controller;
 
 import com.robbieshop.inventoryservice.dto.InventoryResponse;
-import com.robbieshop.inventoryservice.repository.InventoryRepository;
+//import com.robbieshop.inventoryservice.repository.InventoryRepository;
 import com.robbieshop.inventoryservice.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

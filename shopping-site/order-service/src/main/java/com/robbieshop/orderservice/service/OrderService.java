@@ -3,12 +3,14 @@ package com.robbieshop.orderservice.service;
 import com.robbieshop.orderservice.dto.InventoryResponse;
 import com.robbieshop.orderservice.dto.OrderItemsDto;
 import com.robbieshop.orderservice.dto.OrderRequest;
+import com.robbieshop.orderservice.event.OrderPlacedEvent;
 import com.robbieshop.orderservice.model.Order;
 import com.robbieshop.orderservice.model.OrderItems;
 import com.robbieshop.orderservice.repository.OrderRepository;
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,6 +27,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
     private final Tracer tracer;
+    //The KafkaTemplate require a Key and Value pair as the Topic and Message relationship(Dictionary)
+    private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
 
     public String placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -63,11 +67,24 @@ public class OrderService {
 
             if(inStock) {
                 orderRepository.save(order);
+
+                Span notificationServiceLookup = tracer.nextSpan().name("notificationServiceLookup");
+
+                //try resources
+                try(Tracer.SpanInScope isSpanInScope1 = tracer.withSpan(notificationServiceLookup.start())){
+                    //After the order is placed, send a Topic name and the order number as the Message to the message queue.
+                    //In this case, the message can be the order.getOrderNumber or create an OrderPlacedEvent class to store and send as JSON message.
+                    kafkaTemplate.send("notificationTopic", new OrderPlacedEvent(order.getOrderNumber()));
+                } finally {
+                    notificationServiceLookup.end();
+                }
+
                 return "order placed!";
             }
             else {
                 throw new IllegalArgumentException("Product is in sufficient.");
             }
+
         } finally {
             inventoryServiceLookup.end();
         }
