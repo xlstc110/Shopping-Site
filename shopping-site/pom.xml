@@ -27,11 +27,28 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <spring-cloud.version>2022.0.4</spring-cloud.version>
+<!--        <micrometer-tracing.version>1.11.1</micrometer-tracing.version>-->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-brave</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.zipkin.reporter2</groupId>
+            <artifactId>zipkin-reporter-brave</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+    </dependencies>
+
     <dependencyManagement>
         <dependencies>
+
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
@@ -39,6 +56,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -46,6 +64,15 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+<!--            <dependency>-->
+<!--                <groupId>io.micrometer</groupId>-->
+<!--                <artifactId>micrometer-tracing-bom</artifactId>-->
+<!--                <version>${micrometer-tracing.version}</version>-->
+<!--                <type>pom</type>-->
+<!--                <scope>import</scope>-->
+<!--            </dependency>-->
+
         </dependencies>
     </dependencyManagement>
 

@@ -19,13 +19,13 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
 
     @Transactional(readOnly = true)
-    @SneakyThrows//ignore the exception, used to test in develop environment, never use in production environment.
+    //@SneakyThrows//ignore the exception, used to test in develop environment, never use in production environment.
     public List<InventoryResponse> isInStock(List<String> skuCode){
-        //log the info of when did the request start and end to prosecute.
-        log.info("wait time started");
-        //Force the main thread to pause for 10 second to test the timeout circuit breaker function.
-        Thread.sleep(10000);
-        log.info("wait time ended");
+//        //log the info of when did the request start and end to prosecute.
+//        log.info("wait time started");
+//        //Force the main thread to pause for 10 second to test the timeout circuit breaker function.
+//        Thread.sleep(10000);
+//        log.info("wait time ended");
 
         //check if the inventory object is present, if not, it means the inventory does not exist.
         return inventoryRepository.findBySkuCodeIn(skuCode).stream()

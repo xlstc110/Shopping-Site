@@ -6,6 +6,8 @@ import com.robbieshop.orderservice.dto.OrderRequest;
 import com.robbieshop.orderservice.model.Order;
 import com.robbieshop.orderservice.model.OrderItems;
 import com.robbieshop.orderservice.repository.OrderRepository;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
+    private final Tracer tracer;
 
     public String placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -38,27 +41,38 @@ public class OrderService {
                 .map(orderItems -> orderItems.getSkuCode())
                 .toList();
 
-        //Call inventory service and place order if the inventory is in stock.
-        //WebClient can make HTTP call to the server.
-        //Indicate the URL of the service to send the HTTP request
-        InventoryResponse[] inventoryResponses = webClientBuilder.build().get()
-                            .uri("http://inventory-service/api/inventory",
-                                    uriBuilder -> uriBuilder.queryParam("skuCode", skuCodes).build())
-                            .retrieve()
-                            .bodyToMono(InventoryResponse[].class)
-                            .block();
-        //The WebClient by default will make an Asynchronous call, using .block() method to make the Synchronous call.
+        //Since the postOrder API endpoint return a CompletableFuture Async type, creating unique Span for this Request span chain
+        // is necessary, because Async call creates a seperated thread and the default tracing is not tracing the new thread.
+        Span inventoryServiceLookup = tracer.nextSpan().name("InventoryServiceLookup");//Store the written variable
 
-        //Since inventoryResponses is an Array, not a List<> we have to use Arrays.stream() method to use stream feature:
-        boolean inStock = Arrays.stream(inventoryResponses).allMatch(inventoryResponse -> inventoryResponse.getIsStock());
+        //
+        try(Tracer.SpanInScope isSpanInScope = tracer.withSpan(inventoryServiceLookup.start())){
+            //Call inventory service and place order if the inventory is in stock.
+            //WebClient can make HTTP call to the server.
+            //Indicate the URL of the service to send the HTTP request
+            InventoryResponse[] inventoryResponses = webClientBuilder.build().get()
+                    .uri("http://inventory-service/api/inventory",
+                            uriBuilder -> uriBuilder.queryParam("skuCode", skuCodes).build())
+                    .retrieve()
+                    .bodyToMono(InventoryResponse[].class)
+                    .block();
+            //The WebClient by default will make an Asynchronous call, using .block() method to make the Synchronous call.
 
-        if(inStock) {
-            orderRepository.save(order);
-            return "order placed!";
+            //Since inventoryResponses is an Array, not a List<> we have to use Arrays.stream() method to use stream feature:
+            boolean inStock = Arrays.stream(inventoryResponses).allMatch(inventoryResponse -> inventoryResponse.getIsStock());
+
+            if(inStock) {
+                orderRepository.save(order);
+                return "order placed!";
+            }
+            else {
+                throw new IllegalArgumentException("Product is in sufficient.");
+            }
+        } finally {
+            inventoryServiceLookup.end();
         }
-        else {
-            throw new IllegalArgumentException("Product is in sufficient.");
-        }
+
+
     }
 
     public OrderItems mapToDto(OrderItemsDto orderItemsDto){
