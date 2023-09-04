@@ -23,4 +23,6 @@ Circuit Breaker(Fault Tolorance) - Spring Cloud Circuit Breaker and Resilience4J
 
 Event Logging System - 
 
-Distributed Tracing - Zipkin(Visualization) and Spring Cloud Sleuth(Trace Capture)
+Distributed Tracing - Zipkin(Visualization) and Micrometer(Trace Capture, migrated from Sleuth)
+
+Even Driven Architechture - Kafka
